@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Market Sentinel — GenLayer Studionet</title>
+<script src="https://cdn.jsdelivr.net/npm/genlayer-js@latest/dist/index.umd.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #050810;
+  --bg1:      #090d1a;
+  --bg2:      #0d1220;
+  --bg3:      #111826;
+  --border:   #1a2238;
+  --border2:  #243050;
+  --cyan:     #00e5ff;
+  --cyan2:    #40eeff;
+  --cyan-d:   rgba(0,229,255,.1);
+  --lime:     #39ff14;
+  --lime2:    #5fff3a;
+  --lime-d:   rgba(57,255,20,.08);
+  --red:      #ff2244;
+  --red-d:    rgba(255,34,68,.1);
+  --amber:    #ffb300;
+  --amber-d:  rgba(255,179,0,.1);
+  --text:     #c8d8f0;
+  --text2:    #4a6080;
+  --text3:    #1e2d40;
+  --mono:     'Share Tech Mono', monospace;
+  --body:     'Exo 2', sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px}
+body{background:var(--bg);color:var(--text);font-family:var(--body);min-height:100vh;overflow-x:hidden}
+
+/* scanlines */
+body::before{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,229,255,.012) 3px,rgba(0,229,255,.012) 4px)}
+body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(0,229,255,.04) 0%,transparent 60%)}
+
+/* ── HEADER ── */
+header{position:sticky;top:0;z-index:100;background:rgba(5,8,16,.92);backdrop-filter:blur(14px);border-bottom:2px solid var(--cyan);padding:0 2rem;height:62px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 0 30px rgba(0,229,255,.15)}
+.logo{display:flex;align-items:center;gap:13px}
+.logo-icon{font-family:var(--mono);font-size:22px;color:var(--lime);text-shadow:0 0 12px var(--lime)}
+.logo-text{font-family:var(--mono);font-size:14px;color:var(--cyan);letter-spacing:.08em;text-shadow:0 0 10px var(--cyan)}
+.logo-sub{font-family:var(--mono);font-size:9px;color:var(--text2);letter-spacing:.1em;margin-top:2px}
+.header-right{display:flex;align-items:center;gap:12px}
+.conn-status{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:var(--text2);padding:4px 12px;border:1px solid var(--border2);border-radius:4px}
+.conn-dot{width:6px;height:6px;border-radius:50%}
+.conn-dot.live{background:var(--lime);box-shadow:0 0 6px var(--lime);animation:pulse 2s infinite}
+.conn-dot.dead{background:var(--red);box-shadow:0 0 6px var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.contract-addr{font-family:var(--mono);font-size:9px;color:var(--cyan2);letter-spacing:.04em;padding:4px 10px;border:1px solid rgba(0,229,255,.2)}
+
+/* ── LAYOUT ── */
+.app{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:2rem 1.5rem 5rem;display:grid;grid-template-columns:320px 1fr;gap:1.5rem;align-items:start}
+
+/* ── SIDEBAR ── */
+.sidebar{display:flex;flex-direction:column;gap:1rem;position:sticky;top:78px}
+
+/* ── CARDS ── */
+.card{background:var(--bg1);border:1px solid var(--border);padding:1.25rem;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--cyan);box-shadow:0 0 10px var(--cyan)}
+.card-title{font-family:var(--mono);font-size:11px;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase;margin-bottom:1rem;display:flex;align-items:center;gap:8px;text-shadow:0 0 8px var(--cyan)}
+.card-title.lime{color:var(--lime);text-shadow:0 0 8px var(--lime)}.card-title.lime::before,.card.lime-card::before{background:var(--lime);box-shadow:0 0 10px var(--lime)}
+.card-title.amber{color:var(--amber);text-shadow:0 0 8px var(--amber)}
+.method-tag{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--text2);padding:2px 8px;border:1px solid var(--border2)}
+
+/* ── FIELDS ── */
+.field{margin-bottom:11px}.field:last-child{margin-bottom:0}
+.field-label{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text2);margin-bottom:5px}
+.field input,.field textarea,.field select{width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--cyan2);font-family:var(--mono);font-size:11px;padding:9px 11px;outline:none;transition:all .2s}
+.field input:focus,.field textarea:focus{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,229,255,.12),0 0 12px rgba(0,229,255,.08)}
+.field textarea{resize:vertical;min-height:72px;line-height:1.6}
+.field input::placeholder,.field textarea::placeholder{color:var(--text3);font-style:italic}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 16px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;cursor:pointer;border:1px solid;background:transparent;transition:all .2s;text-transform:uppercase}
+.btn:hover{transform:translateY(-1px)}.btn:active{transform:none}.btn:disabled{opacity:.3;cursor:not-allowed;transform:none!important}
+.btn-cyan{color:var(--cyan);border-color:var(--cyan);box-shadow:0 0 8px rgba(0,229,255,.15)}.btn-cyan:hover{background:rgba(0,229,255,.08);box-shadow:0 0 20px rgba(0,229,255,.3)}
+.btn-lime{color:var(--lime);border-color:var(--lime);box-shadow:0 0 8px rgba(57,255,20,.15)}.btn-lime:hover{background:rgba(57,255,20,.06);box-shadow:0 0 20px rgba(57,255,20,.25)}
+.btn-red{color:var(--red);border-color:var(--red)}.btn-red:hover{background:var(--red-d)}
+.btn-outline{color:var(--text2);border-color:var(--border2)}.btn-outline:hover{border-color:var(--cyan);color:var(--cyan)}
+.btn-full{width:100%}
+.spinner{width:11px;height:11px;border:2px solid var(--border2);border-top-color:var(--cyan);border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── TERMINAL ── */
+.terminal{margin-top:12px;background:#030508;border:1px solid var(--border);display:none;max-height:220px;overflow-y:auto}
+.terminal.visible{display:block;animation:fade-in .3s ease}
+@keyframes fade-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.term-bar{display:flex;align-items:center;gap:5px;padding:6px 10px;background:var(--bg2);border-bottom:1px solid var(--border)}
+.tdot{width:7px;height:7px;border-radius:50%}
+.term-lbl{font-family:var(--mono);font-size:8px;color:var(--text2);margin-left:5px;letter-spacing:.08em}
+.term-out{padding:10px 12px;font-family:var(--mono);font-size:10px;line-height:1.9;white-space:pre-wrap;word-break:break-all;color:var(--text2)}
+.tg{color:var(--lime)}.tr{color:var(--red)}.tc{color:var(--cyan)}.ta{color:var(--amber)}.td{color:var(--text3)}.tw{color:var(--text)}
+
+/* ── ALERT CARDS ── */
+.alerts-wrap{background:var(--bg1);border:1px solid var(--border);padding:0}
+.alerts-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--cyan);letter-spacing:.08em;text-shadow:0 0 8px var(--cyan)}
+.alert-list{display:flex;flex-direction:column}
+.alert-item{border-bottom:1px solid var(--border);padding:1rem 1.25rem;transition:background .1s;position:relative;overflow:hidden}
+.alert-item:last-child{border-bottom:none}
+.alert-item:hover{background:rgba(0,229,255,.025)}
+.alert-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px}
+.alert-item.status-active::before{background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+.alert-item.status-triggered::before{background:var(--lime);box-shadow:0 0 8px var(--lime);animation:pulse 1.5s infinite}
+.alert-item.status-cancelled::before{background:var(--text3)}
+.alert-head{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.alert-id{font-family:var(--mono);font-size:11px;color:var(--text2)}
+.alert-asset{font-family:var(--mono);font-size:14px;color:var(--cyan);text-shadow:0 0 8px var(--cyan);font-weight:700}
+.status-badge{font-family:var(--mono);font-size:9px;padding:2px 8px;border:1px solid;letter-spacing:.06em;text-transform:uppercase}
+.sb-active{color:var(--cyan);border-color:rgba(0,229,255,.3)}
+.sb-triggered{color:var(--lime);border-color:rgba(57,255,20,.3);animation:pulse 2s infinite}
+.sb-cancelled{color:var(--text2);border-color:var(--border2)}
+.alert-intent{font-size:12px;color:var(--text);line-height:1.5;margin-bottom:8px}
+.alert-verdict{font-family:var(--mono);font-size:10px;padding:6px 10px;background:var(--bg2);border-left:2px solid var(--border2);line-height:1.6}
+.alert-verdict.v-triggered{border-color:var(--lime);color:var(--lime)}
+.alert-verdict.v-pending{border-color:var(--cyan);color:var(--text2)}
+.alert-actions{display:flex;gap:8px;margin-top:10px}
+.empty-alerts{text-align:center;padding:3rem;font-family:var(--mono);font-size:11px;color:var(--text2);letter-spacing:.06em}
+
+/* ── ERROR BANNER ── */
+.error-banner{display:none;background:var(--red-d);border:1px solid var(--red);padding:.75rem 1rem;margin-bottom:1rem;font-family:var(--mono);font-size:11px;color:var(--red)}
+.error-banner.visible{display:block}
+
+/* ── TX LOG ── */
+.tx-log{background:var(--bg1);border:1px solid var(--border);margin-top:1.5rem}
+.tx-log-hdr{display:flex;align-items:center;justify-content:space-between;padding:.875rem 1.25rem;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--cyan);letter-spacing:.08em}
+.tx-entries{max-height:160px;overflow-y:auto}
+.tx-entries::-webkit-scrollbar{width:3px}.tx-entries::-webkit-scrollbar-thumb{background:var(--border2)}
+.tx-entry{display:flex;align-items:center;gap:10px;padding:8px 1.25rem;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:10px}
+.tx-entry:last-child{border-bottom:none}
+.tx-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.dok{background:var(--lime);box-shadow:0 0 5px var(--lime)}.derr{background:var(--red);box-shadow:0 0 5px var(--red)}
+.tx-method{color:var(--cyan);flex:1}.tx-detail{color:var(--text2);font-size:9px}.tx-time{color:var(--text2);font-size:9px}
+.tok{color:var(--lime);font-size:9px}.terr{color:var(--red);font-size:9px}
+.empty-log{padding:1.25rem;text-align:center;font-family:var(--mono);font-size:10px;color:var(--text2)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">◈</div>
+    <div><div class="logo-text">AI MARKET SENTINEL</div><div class="logo-sub">GenLayer Studionet · Real Contract Calls</div></div>
+  </div>
+  <div class="header-right">
+    <div class="conn-status"><div class="conn-dot dead" id="conn-dot"></div><span id="conn-label">Connecting…</span></div>
+    <div class="contract-addr" id="contract-addr-display">0xc616…9098</div>
+  </div>
+</header>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <!-- CONFIG -->
+    <div class="card">
+      <div class="card-title">⚙ Configuration</div>
+      <div class="field"><label class="field-label">Contract Address</label><input type="text" id="cfg-addr" value="0xc616067C1d45B68D801566A0439D580E260C9098" placeholder="0x…"></div>
+      <div class="field"><label class="field-label">Studionet RPC URL</label><input type="text" id="cfg-rpc" value="https://studio.genlayer.com/api" placeholder="https://studio.genlayer.com/api"></div>
+      <div class="field"><label class="field-label">Private Key (for signing)</label><input type="password" id="cfg-pk" placeholder="0x… (test key only)"></div>
+      <button class="btn btn-cyan btn-full" onclick="connectClient()" style="margin-top:8px">◈ Connect to Studionet</button>
+      <div id="error-banner" class="error-banner"></div>
+    </div>
+
+    <!-- CREATE ALERT -->
+    <div class="card lime-card">
+      <div class="card-title lime">+ Create Alert<span class="method-tag">create_intelligent_alert()</span></div>
+      <div class="field"><label class="field-label">Asset / Token</label><input type="text" id="ca-asset" placeholder="BTC, ETH, SOL…" value="BTC"></div>
+      <div class="field"><label class="field-label">Alert Condition (plain English)</label><textarea id="ca-intent" rows="3" placeholder="Describe the condition…">Alert me when BTC dominance drops below 50% and altcoins show strong momentum signals.</textarea></div>
+      <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+        <button class="btn btn-lime btn-full" id="ca-btn" onclick="createAlert()"><span id="ca-txt">+ Create Alert</span></button>
+        <span id="ca-sp" style="display:none"><span class="spinner"></span></span>
+      </div>
+      <div class="terminal" id="ca-terminal">
+        <div class="term-bar"><div class="tdot" style="background:#ff5f57"></div><div class="tdot" style="background:#febc2e"></div><div class="tdot" style="background:#28c840"></div><span class="term-lbl">STUDIONET TX</span></div>
+        <div class="term-out" id="ca-out"></div>
+      </div>
+    </div>
+
+    <!-- SENTINEL CHECK -->
+    <div class="card">
+      <div class="card-title">⚡ Sentinel Check<span class="method-tag">process_sentinel_check()</span></div>
+      <div class="field"><label class="field-label">Alert ID</label><input type="number" id="sc-id" placeholder="0" min="0"></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:10px">
+        <button class="btn btn-cyan btn-full" id="sc-btn" onclick="sentinelCheck()"><span id="sc-txt">⚡ Run Check</span></button>
+        <span id="sc-sp" style="display:none"><span class="spinner"></span></span>
+      </div>
+      <div class="terminal" id="sc-terminal">
+        <div class="term-bar"><div class="tdot" style="background:#ff5f57"></div><div class="tdot" style="background:#febc2e"></div><div class="tdot" style="background:#28c840"></div><span class="term-lbl">CONSENSUS OUTPUT</span></div>
+        <div class="term-out" id="sc-out"></div>
+      </div>
+    </div>
+
+    <!-- CANCEL -->
+    <div class="card">
+      <div class="card-title amber">✕ Cancel Alert<span class="method-tag">cancel_alert()</span></div>
+      <div class="field"><label class="field-label">Alert ID</label><input type="number" id="xl-id" placeholder="0" min="0"></div>
+      <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+        <button class="btn btn-red btn-full" id="xl-btn" onclick="cancelAlert()"><span id="xl-txt">✕ Cancel</span></button>
+        <span id="xl-sp" style="display:none"><span class="spinner"></span></span>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- MAIN -->
+  <main>
+    <div class="alerts-wrap">
+      <div class="alerts-header">
+        ◈ SENTINEL ALERT REGISTRY
+        <button class="btn btn-outline" onclick="refreshAlerts()" style="font-size:9px;padding:4px 10px">↻ REFRESH</button>
+      </div>
+      <div class="alert-list" id="alert-list"><div class="empty-alerts">CONNECT TO STUDIONET AND CREATE AN ALERT TO BEGIN</div></div>
+    </div>
+
+    <div class="tx-log">
+      <div class="tx-log-hdr">◈ TRANSACTION LOG<button class="btn btn-outline" onclick="txLog=[];renderTxLog()" style="font-size:9px;padding:3px 8px">CLR</button></div>
+      <div class="tx-entries" id="tx-entries"><div class="empty-log">NO TRANSACTIONS YET</div></div>
+    </div>
+  </main>
+
+</div>
+
+<script>
+// ── GenLayer JS Client Setup ───────────────────────────────────────────
+// genlayer-js is loaded from CDN above as window.GenLayerJS
+let client = null;
+let account = null;
+let CONTRACT_ADDRESS = '0xc616067C1d45B68D801566A0439D580E260C9098';
+
+let alerts = [];  // local cache of loaded alerts
+let txLog  = [];
+
+// ── Helpers ────────────────────────────────────────────────────────────
+function now(){ return new Date().toLocaleTimeString('en',{hour12:false}); }
+
+function showError(msg){
+  const el = document.getElementById('error-banner');
+  el.textContent = '✗ ' + msg;
+  el.classList.add('visible');
+  setTimeout(()=>el.classList.remove('visible'), 6000);
+}
+
+function addTx(m, s, d){ txLog.unshift({m,s,d,t:now()}); renderTxLog(); }
+function renderTxLog(){
+  const el = document.getElementById('tx-entries');
+  if(!txLog.length){ el.innerHTML='<div class="empty-log">NO TRANSACTIONS YET</div>'; return; }
+  el.innerHTML = txLog.slice(0,14).map(t=>`
+    <div class="tx-entry">
+      <div class="tx-dot ${t.s==='ok'?'dok':'derr'}"></div>
+      <span class="tx-method">${t.m}</span>
+      <span class="${t.s==='ok'?'tok':'terr'}">${t.s==='ok'?'✓ ACCEPTED':'✗ REVERTED'}</span>
+      <span class="tx-detail">${t.d}</span>
+      <span class="tx-time">${t.t}</span>
+    </div>`).join('');
+}
+
+function setLoad(id, on, lbl){
+  const b=document.getElementById(id+'-btn'), s=document.getElementById(id+'-sp'), t=document.getElementById(id+'-txt');
+  if(b) b.disabled=on;
+  if(s) s.style.display = on ? 'inline' : 'none';
+  if(t && !on && lbl) t.textContent = lbl;
+  if(t && on) t.textContent = '…';
+}
+
+function showTerm(id, lines){
+  const t=document.getElementById(id+'-terminal'), o=document.getElementById(id+'-out');
+  t.classList.add('visible');
+  o.innerHTML = lines.map(([c,l])=>`<span class="${c}">${l}</span>\n`).join('');
+}
+
+function appTerm(id, lines){
+  const o = document.getElementById(id+'-out');
+  lines.forEach(([c,l])=>o.innerHTML+=`<span class="${c}">${l}</span>\n`);
+  o.scrollTop = o.scrollHeight;
+}
+
+// ── Connect to Studionet ───────────────────────────────────────────────
+async function connectClient(){
+  const rpc  = document.getElementById('cfg-rpc').value.trim();
+  const pk   = document.getElementById('cfg-pk').value.trim();
+  CONTRACT_ADDRESS = document.getElementById('cfg-addr').value.trim();
+  document.getElementById('contract-addr-display').textContent =
+    CONTRACT_ADDRESS.slice(0,8)+'…'+CONTRACT_ADDRESS.slice(-6);
+
+  try {
+    const GL = window.GenLayerJS || window.genlayerJs;
+    if(!GL){ showError('genlayer-js not loaded. Check CDN.'); return; }
+
+    // Create client connected to Studionet
+    client = GL.createClient({ endpointUrl: rpc });
+
+    if(pk){
+      account = GL.createAccount({ privateKey: pk });
+    } else {
+      // Use a random ephemeral account for read-only
+      account = GL.generateRandomAccount ? GL.generateRandomAccount() : null;
+    }
+
+    document.getElementById('conn-dot').className   = 'conn-dot live';
+    document.getElementById('conn-label').textContent = 'STUDIONET LIVE';
+
+    await refreshAlerts();
+  } catch(e){
+    showError('Connection failed: ' + e.message);
+    document.getElementById('conn-dot').className   = 'conn-dot dead';
+    document.getElementById('conn-label').textContent = 'DISCONNECTED';
+  }
+}
+
+// ── Read: get total alerts count then load each ────────────────────────
+async function refreshAlerts(){
+  if(!client){ showError('Not connected. Connect first.'); return; }
+  try {
+    const GL = window.GenLayerJS || window.genlayerJs;
+    const totalStr = await client.readContract({
+      address:   CONTRACT_ADDRESS,
+      functionName: 'get_total_alerts',
+      args:      [],
+    });
+    const total = parseInt(totalStr) || 0;
+    alerts = [];
+    for(let i = 0; i < total; i++){
+      try {
+        const meta    = await client.readContract({ address: CONTRACT_ADDRESS, functionName: 'get_alert_meta',         args:[i] });
+        const state   = await client.readContract({ address: CONTRACT_ADDRESS, functionName: 'inspect_alert_state',   args:[i] });
+        const metaObj = JSON.parse(meta);
+        const stateObj= JSON.parse(state);
+        alerts.push({ id:i, ...metaObj, ...stateObj });
+      } catch(e){ /* skip bad IDs */ }
+    }
+    renderAlerts();
+  } catch(e){
+    showError('Failed to load alerts: ' + e.message);
+  }
+}
+
+// ── Write: create_intelligent_alert ───────────────────────────────────
+async function createAlert(){
+  if(!client || !account){ showError('Connect with a private key to sign transactions.'); return; }
+  const asset  = document.getElementById('ca-asset').value.trim();
+  const intent = document.getElementById('ca-intent').value.trim();
+  if(!asset || !intent){ showError('Asset and intent are required.'); return; }
+
+  setLoad('ca', true);
+  showTerm('ca',[
+    ['td', '> genlayer write create_intelligent_alert'],
+    ['tc', 'Signing transaction with account…'],
+    ['tc', 'Broadcasting to Studionet…'],
+  ]);
+
+  try {
+    const GL = window.GenLayerJS || window.genlayerJs;
+    const txHash = await client.writeContract({
+      address:      CONTRACT_ADDRESS,
+      functionName: 'create_intelligent_alert',
+      args:         [asset, intent],
+      account,
+    });
+    appTerm('ca',[['tc', 'Tx hash: ' + txHash]]);
+
+    // Wait for receipt
+    const receipt = await client.waitForTransactionReceipt({ hash: txHash });
+    const newId = receipt?.result ?? '?';
+
+    appTerm('ca',[
+      ['tg', '✓ Transaction accepted'],
+      ['tg', '  → alert_id = ' + newId],
+    ]);
+    addTx(`create_intelligent_alert("${asset}")`,'ok',`id=${newId}`);
+    document.getElementById('sc-id').value = newId;
+    document.getElementById('xl-id').value = newId;
+    await refreshAlerts();
+  } catch(e){
+    appTerm('ca',[['tr', '✗ ' + e.message]]);
+    addTx('create_intelligent_alert(…)','err', e.message.slice(0,40));
+    showError(e.message);
+  }
+  setLoad('ca', false, '+ Create Alert');
+}
+
+// ── Write: process_sentinel_check ─────────────────────────────────────
+async function sentinelCheck(){
+  if(!client || !account){ showError('Connect with a private key to sign transactions.'); return; }
+  const id = document.getElementById('sc-id').value;
+  if(id === ''){ showError('Enter an alert ID.'); return; }
+
+  setLoad('sc', true);
+  showTerm('sc',[
+    ['td', `> genlayer write process_sentinel_check(${id})`],
+    ['tc', 'Fetching live market data via 5 validator nodes…'],
+    ['tc', 'gl.nondet.web.render() → CoinGecko + CryptoPanic…'],
+    ['tc', 'gl.nondet.exec_prompt() → AI adjudication…'],
+    ['tc', 'gl.eq_principle.strict_eq() → awaiting consensus…'],
+  ]);
+
+  try {
+    const txHash  = await client.writeContract({
+      address:      CONTRACT_ADDRESS,
+      functionName: 'process_sentinel_check',
+      args:         [parseInt(id)],
+      account,
+    });
+    appTerm('sc',[['tc', 'Tx: ' + txHash],['tc', 'Waiting for validator consensus (may take 30-60s)…']]);
+
+    const receipt = await client.waitForTransactionReceipt({ hash: txHash });
+    const triggered = receipt?.result;
+
+    appTerm('sc',[
+      [triggered ? 'tg' : 'tc', `✓ Consensus reached → ${triggered ? '[TRIGGERED] 🚨' : '[PENDING]'}`],
+    ]);
+    addTx(`process_sentinel_check(${id})`, 'ok', triggered ? 'TRIGGERED' : 'PENDING');
+    await refreshAlerts();
+  } catch(e){
+    appTerm('sc',[['tr', '✗ ' + e.message]]);
+    addTx(`process_sentinel_check(${id})`, 'err', e.message.slice(0,40));
+    showError(e.message);
+  }
+  setLoad('sc', false, '⚡ Run Check');
+}
+
+// ── Write: cancel_alert ───────────────────────────────────────────────
+async function cancelAlert(){
+  if(!client || !account){ showError('Connect with a private key to sign transactions.'); return; }
+  const id = document.getElementById('xl-id').value;
+  if(id === ''){ showError('Enter an alert ID.'); return; }
+
+  setLoad('xl', true);
+  try {
+    const txHash  = await client.writeContract({
+      address:      CONTRACT_ADDRESS,
+      functionName: 'cancel_alert',
+      args:         [parseInt(id)],
+      account,
+    });
+    const receipt = await client.waitForTransactionReceipt({ hash: txHash });
+    addTx(`cancel_alert(${id})`, 'ok', 'cancelled');
+    await refreshAlerts();
+  } catch(e){
+    addTx(`cancel_alert(${id})`, 'err', e.message.slice(0,40));
+    showError(e.message);
+  }
+  setLoad('xl', false, '✕ Cancel');
+}
+
+// ── Render alert list ─────────────────────────────────────────────────
+function renderAlerts(){
+  const el = document.getElementById('alert-list');
+  if(!alerts.length){
+    el.innerHTML='<div class="empty-alerts">NO ALERTS — CREATE ONE TO BEGIN</div>';
+    return;
+  }
+  el.innerHTML = alerts.map(a=>{
+    const statusCls = a.status==='Triggered'?'status-triggered':a.status==='Cancelled'?'status-cancelled':'status-active';
+    const sbCls     = a.status==='Triggered'?'sb-triggered':a.status==='Cancelled'?'sb-cancelled':'sb-active';
+    const history   = a.history || {};
+    const verdict   = history.verdict || 'PENDING';
+    const verdictCls= verdict==='TRIGGERED'?'v-triggered':'v-pending';
+    return `<div class="alert-item ${statusCls}">
+      <div class="alert-head">
+        <span class="alert-id">#${a.id}</span>
+        <span class="alert-asset">${a.asset || '?'}</span>
+        <span class="status-badge ${sbCls}">${a.status || 'Active'}</span>
+      </div>
+      <div class="alert-intent">${a.intent || ''}</div>
+      ${history.reasoning ? `<div class="alert-verdict ${verdictCls}">
+        [${verdict}] ${history.reasoning}
+        ${history.confidence !== undefined ? `<span style="color:var(--text2)"> · confidence: ${history.confidence}%</span>` : ''}
+      </div>` : ''}
+      <div class="alert-actions">
+        ${a.status==='Active'?`<button class="btn btn-cyan" style="font-size:9px;padding:5px 10px" onclick="document.getElementById('sc-id').value=${a.id};sentinelCheck()">⚡ CHECK</button>`:''}
+        ${a.status==='Active'?`<button class="btn btn-red" style="font-size:9px;padding:5px 10px" onclick="document.getElementById('xl-id').value=${a.id};cancelAlert()">✕ CANCEL</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Auto-connect on load if address already filled
+window.addEventListener('load', ()=>{
+  // Show disconnected state clearly
+  document.getElementById('conn-dot').className    = 'conn-dot dead';
+  document.getElementById('conn-label').textContent = 'NOT CONNECTED';
+});
+</script>
+</body>
+</html>

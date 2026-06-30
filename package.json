@@ -1,0 +1,22 @@
+{
+  "name": "ai-market-sentinel",
+  "version": "2.0.0",
+  "description": "GenLayer Intelligent Contract monitoring crypto markets with plain-English alerts. v2 fixes genvm-lint errors and replaces simulated frontend with real genlayer-js Studionet calls.",
+  "keywords": [
+    "genlayer", "market-alerts", "blockchain", "ai",
+    "consensus", "web3", "defi", "crypto", "oracle"
+  ],
+  "homepage": "https://studio.genlayer.com/?import-contract=0xc616067C1d45B68D801566A0439D580E260C9098",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JimmyOgb/ai-market-sentinel"
+  },
+  "license": "MIT",
+  "scripts": {
+    "dev": "npx serve frontend/",
+    "start": "npx serve frontend/",
+    "deploy:cloudflare": "wrangler pages deploy frontend/",
+    "deploy:netlify": "netlify deploy --prod --dir frontend/",
+    "deploy:vercel": "vercel --prod"
+  }
+}
