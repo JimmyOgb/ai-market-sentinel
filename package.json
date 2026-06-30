@@ -3,8 +3,15 @@
   "version": "2.0.0",
   "description": "GenLayer Intelligent Contract monitoring crypto markets with plain-English alerts. v2 fixes genvm-lint errors and replaces simulated frontend with real genlayer-js Studionet calls.",
   "keywords": [
-    "genlayer", "market-alerts", "blockchain", "ai",
-    "consensus", "web3", "defi", "crypto", "oracle"
+    "genlayer",
+    "market-alerts",
+    "blockchain",
+    "ai",
+    "consensus",
+    "web3",
+    "defi",
+    "crypto",
+    "oracle"
   ],
   "homepage": "https://studio.genlayer.com/?import-contract=0xc616067C1d45B68D801566A0439D580E260C9098",
   "repository": {
@@ -17,6 +24,11 @@
     "start": "npx serve frontend/",
     "deploy:cloudflare": "wrangler pages deploy frontend/",
     "deploy:netlify": "netlify deploy --prod --dir frontend/",
-    "deploy:vercel": "vercel --prod"
+    "deploy:vercel": "vercel --prod",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
+  },
+  "devDependencies": {
+    "wrangler": "^4.105.0"
   }
 }
